@@ -1,7 +1,7 @@
 export abstract class BaseService {
     protected baseUrl: string;
 
-    constructor(baseUrl: string = "http://localhost:8081/api") {
+    constructor(baseUrl: string = "/api") {
         this.baseUrl = baseUrl;
     }
 
