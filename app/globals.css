@@ -5,6 +5,16 @@
   --color-primary: #137fec;
   --color-background-light: #f6f7f8;
   --color-background-dark: #101922;
+  --color-text-light: #24292F;
+  --color-text-dark: #e6edf3;
+  --color-secondary-text-light: #57606A;
+  --color-secondary-text-dark: #92adc9;
+  --color-border-light: #D0D7DE;
+  --color-border-dark: #233648;
+  --color-component-bg-light: #FFFFFF;
+  --color-component-bg-dark: #111a22;
+  --color-component-secondary-bg-light: #f6f8fa;
+  --color-component-secondary-bg-dark: #233648;
   --font-display: var(--font-space-grotesk);
 }
 
