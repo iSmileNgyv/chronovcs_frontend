@@ -1,19 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { authService } from "@/services/auth-service";
+import { useAuth } from "@/components/auth-provider";
 
 export default function LoginPage() {
+    const { login, isAuthenticated, user: authUser } = useAuth();
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (isAuthenticated && authUser) {
+            router.push(`/${authUser.username}`);
+        }
+    }, [isAuthenticated, authUser, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,8 +31,14 @@ export default function LoginPage() {
         try {
             const user = await authService.login(email, password);
             console.log("Login successful:", user);
-            // Derive username from email or use a default since it's not in the response
-            const username = user.email.split("@")[0];
+
+            // Create token (Basic Auth)
+            const token = btoa(`${email}:${password}`);
+
+            // Update auth context
+            login(user, token);
+
+            const username = user.username || user.email.split("@")[0];
             router.push(`/${username}`);
         } catch (err) {
             console.error("Login failed:", err);

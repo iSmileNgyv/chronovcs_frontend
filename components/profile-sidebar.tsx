@@ -4,7 +4,10 @@ import React from "react";
 import { MapPin, Link as LinkIcon, AtSign } from "lucide-react";
 import Link from "next/link";
 
+import { useAuth } from "@/components/auth-provider";
+
 export function ProfileSidebar() {
+    const { user } = useAuth();
     return (
         <aside className="md:col-span-4 lg:col-span-3">
             <div className="flex flex-col gap-6">
@@ -19,10 +22,10 @@ export function ProfileSidebar() {
                     ></div>
                     <div className="flex flex-col">
                         <p className="text-text-light dark:text-text-dark text-[22px] font-bold leading-tight tracking-[-0.015em]">
-                            Alice Johnson
+                            {user?.username || "Alice Johnson"}
                         </p>
                         <p className="text-secondary-text-light dark:text-secondary-text-dark text-lg font-normal leading-normal">
-                            @alice_codes
+                            @{user?.username || "alice_codes"}
                         </p>
                     </div>
                     <p className="text-secondary-text-light dark:text-secondary-text-dark text-base font-normal leading-normal">
