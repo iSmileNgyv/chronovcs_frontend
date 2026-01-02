@@ -7,11 +7,15 @@ import { OverviewContent } from "@/components/overview-content";
 import { RepositoryList } from "@/components/repository-list";
 
 export default async function UserProfile({
+    params,
     searchParams,
 }: {
+    params: Promise<{ username: string }>;
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+    const resolvedParams = await params;
     const resolvedSearchParams = await searchParams;
+    const { username } = resolvedParams;
     const tab = resolvedSearchParams.tab || "overview";
 
     return (
@@ -20,7 +24,7 @@ export default async function UserProfile({
             <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                     {/* Left Sidebar */}
-                    <ProfileSidebar />
+                    <ProfileSidebar username={username} />
 
                     {/* Right Content Area */}
                     <div className="md:col-span-8 lg:col-span-9">
@@ -47,9 +51,6 @@ export default async function UserProfile({
                                     >
                                         <Book className="w-5 h-5" />
                                         Repositories
-                                        <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark text-secondary-text-light dark:text-secondary-text-dark">
-                                            12
-                                        </span>
                                     </Link>
                                     <Link
                                         className="flex items-center gap-2 px-1 py-4 border-b-2 border-transparent text-secondary-text-light dark:text-secondary-text-dark hover:text-text-light dark:hover:text-text-dark hover:border-border-light dark:hover:border-border-dark text-sm font-medium whitespace-nowrap transition-colors"
@@ -69,8 +70,8 @@ export default async function UserProfile({
                             </div>
 
                             {/* Tab Content */}
-                            {tab === "overview" ? <OverviewContent /> : null}
-                            {tab === "repositories" ? <RepositoryList /> : null}
+                            {tab === "overview" ? <OverviewContent username={username} /> : null}
+                            {tab === "repositories" ? <RepositoryList username={username} /> : null}
                         </div>
                     </div>
                 </div>

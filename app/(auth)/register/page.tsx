@@ -3,15 +3,20 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 
-export default function LoginPage() {
-    const { login, isAuthenticated, user: authUser, isLoading: authLoading } = useAuth();
+export default function RegisterPage() {
+    const { register, isAuthenticated, user: authUser, isLoading: authLoading } = useAuth();
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [formData, setFormData] = useState({
+        email: "",
+        displayName: "",
+        password: "",
+        confirmPassword: "",
+    });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -22,23 +27,48 @@ export default function LoginPage() {
         }
     }, [isAuthenticated, authUser, router, authLoading]);
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const validateForm = (): string | null => {
+        if (formData.password.length < 8) {
+            return "Password must be at least 8 characters long.";
+        }
+        if (formData.password !== formData.confirmPassword) {
+            return "Passwords do not match.";
+        }
+        if (formData.displayName.length < 2) {
+            return "Display name must be at least 2 characters long.";
+        }
+        return null;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
 
+        const validationError = validateForm();
+        if (validationError) {
+            setError(validationError);
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            await login(email, password);
+            await register(formData.email, formData.password, formData.displayName);
             // Redirect handled by auth provider
         } catch (err) {
-            console.error("Login failed:", err);
-            setError(err instanceof Error ? err.message : "Invalid email or password. Please try again.");
+            console.error("Registration failed:", err);
+            setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Don't show login if checking auth
+    // Don't show register if checking auth
     if (authLoading) {
         return (
             <div className="flex min-h-full flex-1 items-center justify-center">
@@ -66,15 +96,42 @@ export default function LoginPage() {
                     </Link>
                 </div>
                 <h2 className="mt-6 text-center text-2xl/9 font-bold tracking-tight text-text-light dark:text-text-dark">
-                    Sign in to ChronoVCS
+                    Create your account
                 </h2>
                 <p className="mt-2 text-center text-sm/6 text-secondary-text-light dark:text-secondary-text-dark">
-                    Welcome back! Please enter your details.
+                    Join ChronoVCS and start versioning your projects.
                 </p>
             </div>
 
             <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-                <form className="space-y-6" onSubmit={handleSubmit}>
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                    {/* Display Name */}
+                    <div>
+                        <label
+                            htmlFor="displayName"
+                            className="block text-sm/6 font-medium text-text-light dark:text-text-dark"
+                        >
+                            Display Name
+                        </label>
+                        <div className="mt-2 relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <User className="h-5 w-5 text-secondary-text-light dark:text-secondary-text-dark" />
+                            </div>
+                            <input
+                                id="displayName"
+                                name="displayName"
+                                type="text"
+                                required
+                                autoComplete="name"
+                                value={formData.displayName}
+                                onChange={handleChange}
+                                className="block w-full rounded-lg border-0 py-2.5 pl-10 text-text-light dark:text-text-dark shadow-sm ring-1 ring-inset ring-border-light dark:ring-border-dark placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm/6 bg-white dark:bg-component-bg-dark transition-all"
+                                placeholder="John Doe"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Email */}
                     <div>
                         <label
                             htmlFor="email"
@@ -92,31 +149,22 @@ export default function LoginPage() {
                                 type="email"
                                 required
                                 autoComplete="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                value={formData.email}
+                                onChange={handleChange}
                                 className="block w-full rounded-lg border-0 py-2.5 pl-10 text-text-light dark:text-text-dark shadow-sm ring-1 ring-inset ring-border-light dark:ring-border-dark placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm/6 bg-white dark:bg-component-bg-dark transition-all"
-                                placeholder="Enter your email"
+                                placeholder="john@example.com"
                             />
                         </div>
                     </div>
 
+                    {/* Password */}
                     <div>
-                        <div className="flex items-center justify-between">
-                            <label
-                                htmlFor="password"
-                                className="block text-sm/6 font-medium text-text-light dark:text-text-dark"
-                            >
-                                Password
-                            </label>
-                            <div className="text-sm">
-                                <Link
-                                    href="#"
-                                    className="font-semibold text-primary hover:text-primary/80 transition-colors"
-                                >
-                                    Forgot password?
-                                </Link>
-                            </div>
-                        </div>
+                        <label
+                            htmlFor="password"
+                            className="block text-sm/6 font-medium text-text-light dark:text-text-dark"
+                        >
+                            Password
+                        </label>
                         <div className="mt-2 relative">
                             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                 <Lock className="h-5 w-5 text-secondary-text-light dark:text-secondary-text-dark" />
@@ -126,11 +174,11 @@ export default function LoginPage() {
                                 name="password"
                                 type={showPassword ? "text" : "password"}
                                 required
-                                autoComplete="current-password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                autoComplete="new-password"
+                                value={formData.password}
+                                onChange={handleChange}
                                 className="block w-full rounded-lg border-0 py-2.5 pl-10 pr-10 text-text-light dark:text-text-dark shadow-sm ring-1 ring-inset ring-border-light dark:ring-border-dark placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm/6 bg-white dark:bg-component-bg-dark transition-all"
-                                placeholder="Enter your password"
+                                placeholder="Min. 8 characters"
                             />
                             <button
                                 type="button"
@@ -138,6 +186,43 @@ export default function LoginPage() {
                                 onClick={() => setShowPassword(!showPassword)}
                             >
                                 {showPassword ? (
+                                    <EyeOff className="h-5 w-5 text-secondary-text-light dark:text-secondary-text-dark hover:text-text-light dark:hover:text-text-dark transition-colors" />
+                                ) : (
+                                    <Eye className="h-5 w-5 text-secondary-text-light dark:text-secondary-text-dark hover:text-text-light dark:hover:text-text-dark transition-colors" />
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div>
+                        <label
+                            htmlFor="confirmPassword"
+                            className="block text-sm/6 font-medium text-text-light dark:text-text-dark"
+                        >
+                            Confirm Password
+                        </label>
+                        <div className="mt-2 relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <Lock className="h-5 w-5 text-secondary-text-light dark:text-secondary-text-dark" />
+                            </div>
+                            <input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type={showConfirmPassword ? "text" : "password"}
+                                required
+                                autoComplete="new-password"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                className="block w-full rounded-lg border-0 py-2.5 pl-10 pr-10 text-text-light dark:text-text-dark shadow-sm ring-1 ring-inset ring-border-light dark:ring-border-dark placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm/6 bg-white dark:bg-component-bg-dark transition-all"
+                                placeholder="Confirm your password"
+                            />
+                            <button
+                                type="button"
+                                className="absolute inset-y-0 right-0 flex items-center pr-3"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            >
+                                {showConfirmPassword ? (
                                     <EyeOff className="h-5 w-5 text-secondary-text-light dark:text-secondary-text-dark hover:text-text-light dark:hover:text-text-dark transition-colors" />
                                 ) : (
                                     <Eye className="h-5 w-5 text-secondary-text-light dark:text-secondary-text-dark hover:text-text-light dark:hover:text-text-dark transition-colors" />
@@ -161,14 +246,26 @@ export default function LoginPage() {
                             {isLoading ? (
                                 <span className="flex items-center gap-2">
                                     <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                                    Signing in...
+                                    Creating account...
                                 </span>
                             ) : (
-                                "Sign in"
+                                "Create account"
                             )}
                         </button>
                     </div>
                 </form>
+
+                <p className="mt-4 text-center text-xs text-secondary-text-light dark:text-secondary-text-dark">
+                    By creating an account, you agree to our{" "}
+                    <Link href="#" className="text-primary hover:text-primary/80 transition-colors">
+                        Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="#" className="text-primary hover:text-primary/80 transition-colors">
+                        Privacy Policy
+                    </Link>
+                    .
+                </p>
 
                 <div className="mt-6">
                     <div className="relative">
@@ -177,7 +274,7 @@ export default function LoginPage() {
                         </div>
                         <div className="relative flex justify-center text-sm">
                             <span className="bg-background-light dark:bg-background-dark px-2 text-secondary-text-light dark:text-secondary-text-dark">
-                                Or continue with
+                                Or sign up with
                             </span>
                         </div>
                     </div>
@@ -229,12 +326,12 @@ export default function LoginPage() {
                 </div>
 
                 <p className="mt-10 text-center text-sm/6 text-secondary-text-light dark:text-secondary-text-dark">
-                    Don&apos;t have an account?{" "}
+                    Already have an account?{" "}
                     <Link
-                        href="/register"
+                        href="/login"
                         className="font-semibold text-primary hover:text-primary/80 transition-colors"
                     >
-                        Sign up for free
+                        Sign in
                     </Link>
                 </p>
             </div>

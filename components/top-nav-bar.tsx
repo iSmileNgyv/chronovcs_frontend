@@ -208,7 +208,7 @@ export function TopNavBar() {
                                         </div>
                                     </Link>
                                     <Link
-                                        href="#"
+                                        href="/settings/profile"
                                         className="flex items-center gap-4 px-4 min-h-12 justify-between hover:bg-black/5 dark:hover:bg-white/5 bg-primary/10 dark:bg-primary/20 transition-colors"
                                         onClick={() => setIsUserMenuOpen(false)}
                                     >

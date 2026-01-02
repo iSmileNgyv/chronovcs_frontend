@@ -6,7 +6,11 @@ import Link from "next/link";
 
 import { useAuth } from "@/components/auth-provider";
 
-export function ProfileSidebar() {
+interface ProfileSidebarProps {
+    username?: string;
+}
+
+export function ProfileSidebar({ username }: ProfileSidebarProps) {
     const { user } = useAuth();
     return (
         <aside className="md:col-span-4 lg:col-span-3">

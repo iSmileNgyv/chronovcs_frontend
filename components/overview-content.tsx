@@ -3,7 +3,11 @@ import Link from "next/link";
 import { Book, Star } from "lucide-react";
 import { ContributionGraph } from "@/components/contribution-graph";
 
-export function OverviewContent() {
+interface OverviewContentProps {
+    username?: string;
+}
+
+export function OverviewContent({ username }: OverviewContentProps) {
     return (
         <div className="flex flex-col gap-8">
             {/* Pinned Repositories */}
