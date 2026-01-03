@@ -21,6 +21,7 @@ import {
     Settings,
 } from "lucide-react";
 import { RepoCliTokenModal } from "@/components/repo-cli-token-modal";
+import { BranchSelector } from "@/components/branch-selector";
 
 interface RepoHeaderProps {
     username: string;
@@ -43,6 +44,16 @@ export function RepoHeader({ username, repoName, showSourceControls = true }: Re
 
     const activeTabClass = "border-b-primary text-text-light dark:text-text-dark";
     const inactiveTabClass = "border-b-transparent text-secondary-text-light dark:text-secondary-text-dark hover:text-text-light dark:hover:text-text-dark";
+
+    const currentBranch = React.useMemo(() => {
+        if (!pathname) return "main";
+        const parts = pathname.split('/');
+        // /user/repo/tree/branch
+        if ((parts[3] === 'tree' || parts[3] === 'blob') && parts[4]) {
+            return decodeURIComponent(parts[4]);
+        }
+        return "main";
+    }, [pathname]);
 
     return (
         <div className="flex flex-col gap-6">
@@ -137,11 +148,12 @@ export function RepoHeader({ username, repoName, showSourceControls = true }: Re
             {showSourceControls && (
                 <div className="flex justify-between items-center gap-2 py-2">
                     <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 max-w-[480px] cursor-pointer justify-center overflow-hidden rounded-lg h-9 bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark text-text-light dark:text-text-dark text-sm font-medium leading-normal tracking-[0.015em] min-w-0 px-4 border border-border-light dark:border-border-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                            <History className="w-5 h-5" />
-                            <span className="truncate">main</span>
-                            <ChevronDown className="w-5 h-5" />
-                        </button>
+                        <BranchSelector
+                            username={username}
+                            repoName={repoName}
+                            currentBranch={currentBranch}
+                            className="flex items-center gap-2 max-w-[480px] cursor-pointer justify-center overflow-hidden rounded-lg h-9 bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark text-text-light dark:text-text-dark text-sm font-medium leading-normal tracking-[0.015em] min-w-0 px-4 border border-border-light dark:border-border-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        />
                     </div>
                     <div className="flex items-center gap-2">
                         <button className="hidden sm:flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark text-text-light dark:text-text-dark gap-2 text-sm font-medium leading-normal tracking-[0.015em] min-w-0 px-4 border border-border-light dark:border-border-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">

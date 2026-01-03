@@ -144,7 +144,7 @@ class RepositoryService extends BaseService {
      * GET /api/repositories/{repoKey}/blobs/{hash}
      */
     async getBlob(repoKey: string, hash: string): Promise<string> {
-        return this.get<string>(`/repositories/${repoKey}/blobs/${hash}`);
+        return this.getText(`/repositories/${repoKey}/blobs/${hash}`);
     }
 
     /**

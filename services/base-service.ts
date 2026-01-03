@@ -90,11 +90,15 @@ export abstract class BaseService {
     // HTTP Request with Auto-Refresh
     // =====================================
 
-    protected async request<T>(
+    // =====================================
+    // HTTP Request with Auto-Refresh
+    // =====================================
+
+    private async performRequest(
         endpoint: string,
         options: RequestInit = {},
         skipAuth: boolean = false
-    ): Promise<T> {
+    ): Promise<Response> {
         const url = `${this.baseUrl}${endpoint}`;
 
         const headers: Record<string, string> = {
@@ -136,20 +140,40 @@ export abstract class BaseService {
                     }
                 } catch {
                     // Ignore JSON parse error
+                    // If error body is text, maybe append it? 
+                    // For now keeping behavior same as before
                 }
                 throw new Error(errorMessage);
             }
 
-            // Handle empty responses (204 No Content)
-            if (response.status === 204) {
-                return {} as T;
-            }
-
-            return await response.json();
+            return response;
         } catch (error) {
-            console.error('API Request Error:', error);
             throw error;
         }
+    }
+
+    protected async request<T>(
+        endpoint: string,
+        options: RequestInit = {},
+        skipAuth: boolean = false
+    ): Promise<T> {
+        const response = await this.performRequest(endpoint, options, skipAuth);
+
+        // Handle empty responses (204 No Content)
+        if (response.status === 204) {
+            return {} as T;
+        }
+
+        return await response.json();
+    }
+
+    protected async requestText(
+        endpoint: string,
+        options: RequestInit = {},
+        skipAuth: boolean = false
+    ): Promise<string> {
+        const response = await this.performRequest(endpoint, options, skipAuth);
+        return await response.text();
     }
 
     // =====================================
@@ -158,6 +182,10 @@ export abstract class BaseService {
 
     protected get<T>(endpoint: string, skipAuth: boolean = false): Promise<T> {
         return this.request<T>(endpoint, { method: 'GET' }, skipAuth);
+    }
+
+    protected getText(endpoint: string, skipAuth: boolean = false): Promise<string> {
+        return this.requestText(endpoint, { method: 'GET' }, skipAuth);
     }
 
     protected post<T>(endpoint: string, data?: unknown, skipAuth: boolean = false): Promise<T> {

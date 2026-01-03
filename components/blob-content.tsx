@@ -110,7 +110,10 @@ export function BlobContent({ username, repoName, branch, path }: BlobContentPro
     };
 
     const language = languageMap[ext] || "text";
-    const sizeStr = fileInfo.size ? (fileInfo.size < 1024 ? `${fileInfo.size} B` : `${(fileInfo.size / 1024).toFixed(1)} KB`) : "Unknown size";
+
+    // Calculate size: use fileInfo.size if available, otherwise calculate from content
+    const byteSize = fileInfo.size || new Blob([content]).size;
+    const sizeStr = byteSize < 1024 ? `${byteSize} B` : `${(byteSize / 1024).toFixed(1)} KB`;
     // Count lines roughly
     const lineCount = content.split('\n').length;
 

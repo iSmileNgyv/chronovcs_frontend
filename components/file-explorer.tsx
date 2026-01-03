@@ -73,10 +73,15 @@ export function FileExplorer({ username, repoName, branch = "main", path = "" }:
                     setFiles([]);
                 }
 
-            } catch (error) {
-                console.error("Failed to fetch repository data:", error);
+            } catch (error: any) {
+                // Suppress "Branch not found" and "Ref not found" errors for empty repositories as it's an expected state
+                const errorMessage = error?.message || "";
+                if (!errorMessage.includes("Branch not found") && !errorMessage.includes("Ref not found")) {
+                    console.error("Failed to fetch repository data:", error);
+                }
+
                 setFiles([]);
-                // If distinct error for empty repo, set isEmpty. For now assume error on root means empty/problem
+                // If error occurs on root (e.g. branch doesn't exist), show empty state
                 if (path === "") setIsEmpty(true);
             } finally {
                 setIsLoading(false);
@@ -185,8 +190,6 @@ chrono push -u origin ${branch}`}
 
     return (
         <div className="flex flex-col gap-4">
-            {/* Branch and Breadcrumbs Bar removed as per user request */}
-
             <div className="border rounded-lg border-border-light dark:border-border-dark bg-component-bg-light dark:bg-component-bg-dark overflow-hidden shadow-sm">
                 {/* Latest Commit Header */}
                 {lastCommit && (

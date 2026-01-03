@@ -1,34 +1,39 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronDown, GitBranch, Check, Plus, Search, Loader2 } from "lucide-react";
-import { branchService } from "@/services/branch-service";
-import { BranchResponse } from "@/types/branch-dto";
+import { GitBranch, ChevronDown, Check, Search, AlertCircle } from "lucide-react";
+import { repositoryService } from "@/services/repository-service";
+import { useRouter } from "next/navigation";
 
 interface BranchSelectorProps {
-    repoKey: string;
-    currentBranch?: string;
-    onBranchChange?: (branchName: string) => void;
+    username: string;
+    repoName: string;
+    currentBranch: string;
+    onBranchChange?: (branch: string) => void;
+    className?: string;
 }
 
-export function BranchSelector({ repoKey, currentBranch = "main", onBranchChange }: BranchSelectorProps) {
+export function BranchSelector({ username, repoName, currentBranch, onBranchChange, className }: BranchSelectorProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [branches, setBranches] = useState<BranchResponse[]>([]);
-    const [defaultBranch, setDefaultBranch] = useState("main");
-    const [isLoading, setIsLoading] = useState(false);
+    const [branches, setBranches] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [error, setError] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
 
-    // Close dropdown on outside click
+    // Close dropdown when clicking outside
     useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
+        const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
-                setSearchQuery("");
             }
-        }
+        };
+
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
     }, []);
 
     // Fetch branches when dropdown opens
@@ -39,116 +44,98 @@ export function BranchSelector({ repoKey, currentBranch = "main", onBranchChange
     }, [isOpen]);
 
     const fetchBranches = async () => {
-        setIsLoading(true);
+        setLoading(true);
+        setError(null);
         try {
-            const response = await branchService.listBranches(repoKey);
-            setBranches(response.branches);
-            setDefaultBranch(response.defaultBranch);
-        } catch (error) {
-            console.error("Failed to fetch branches:", error);
+            const refs = await repositoryService.getRefs(repoName);
+            // refs.branches is Record<string, string>
+            const branchList = Object.keys(refs.branches);
+            setBranches(branchList);
+        } catch (err) {
+            console.error("Failed to fetch branches:", err);
+            setError("Failed to load branches");
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
-    const handleSelectBranch = (branchName: string) => {
-        onBranchChange?.(branchName);
+    const handleSelectBranch = (branch: string) => {
         setIsOpen(false);
-        setSearchQuery("");
+        if (onBranchChange) {
+            onBranchChange(branch);
+        } else {
+            // Default behavior: Navigate to tree view of new branch
+            router.push(`/${username}/${repoName}/tree/${branch}`);
+        }
     };
 
-    const filteredBranches = branches.filter((branch) =>
-        branch.branchName.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredBranches = branches.filter(branch =>
+        branch.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
         <div className="relative" ref={dropdownRef}>
-            {/* Trigger Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 rounded-lg border border-border-light dark:border-border-dark bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark px-3 py-1.5 text-sm font-medium text-text-light dark:text-text-dark hover:bg-component-bg-light dark:hover:bg-component-bg-dark transition-colors"
+                className={className || "flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-text-light dark:text-text-dark bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark border border-border-light dark:border-border-dark rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm"}
+                title="Switch branch"
             >
                 <GitBranch className="w-4 h-4 text-secondary-text-light dark:text-secondary-text-dark" />
                 <span className="max-w-[120px] truncate">{currentBranch}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-4 h-4 text-secondary-text-light dark:text-secondary-text-dark transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
-            {/* Dropdown */}
             {isOpen && (
-                <div className="absolute left-0 top-full mt-1 w-72 rounded-lg border border-border-light dark:border-border-dark bg-component-bg-light dark:bg-component-bg-dark shadow-lg z-50">
-                    {/* Header */}
-                    <div className="border-b border-border-light dark:border-border-dark px-3 py-2">
-                        <div className="text-xs font-medium text-secondary-text-light dark:text-secondary-text-dark mb-2">
-                            Switch branches
-                        </div>
+                <div className="absolute top-full left-0 mt-2 w-72 bg-component-bg-light dark:bg-component-bg-dark border border-border-light dark:border-border-dark rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    <div className="p-2 border-b border-border-light dark:border-border-dark bg-component-secondary-bg-light/50 dark:bg-component-secondary-bg-dark/50">
                         <div className="relative">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary-text-light dark:text-secondary-text-dark" />
+                            <Search className="absolute left-2.5 top-2 w-4 h-4 text-secondary-text-light dark:text-secondary-text-dark" />
                             <input
                                 type="text"
                                 placeholder="Find a branch..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full rounded-md border border-border-light dark:border-border-dark bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark pl-8 pr-3 py-1.5 text-sm placeholder:text-secondary-text-light dark:placeholder:text-secondary-text-dark focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                className="w-full pl-9 pr-3 py-1.5 text-sm bg-component-bg-light dark:bg-black/20 border border-border-light dark:border-border-dark rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-light dark:text-text-dark placeholder-secondary-text-light dark:placeholder-secondary-text-dark"
                                 autoFocus
                             />
                         </div>
                     </div>
 
-                    {/* Branch List */}
-                    <div className="max-h-64 overflow-y-auto py-1">
-                        {isLoading ? (
-                            <div className="flex items-center justify-center py-6">
-                                <Loader2 className="w-5 h-5 animate-spin text-secondary-text-light dark:text-secondary-text-dark" />
+                    <div className="max-h-60 overflow-y-auto py-1">
+                        {loading ? (
+                            <div className="px-4 py-8 text-center text-sm text-secondary-text-light dark:text-secondary-text-dark">
+                                Loading branches...
+                            </div>
+                        ) : error ? (
+                            <div className="px-4 py-8 text-center text-sm text-red-500 flex flex-col items-center gap-2">
+                                <AlertCircle className="w-4 h-4" />
+                                {error}
                             </div>
                         ) : filteredBranches.length === 0 ? (
-                            <div className="px-3 py-4 text-center text-sm text-secondary-text-light dark:text-secondary-text-dark">
-                                {searchQuery ? (
-                                    <>No branches matching &quot;{searchQuery}&quot;</>
-                                ) : (
-                                    "No branches found"
-                                )}
+                            <div className="px-4 py-8 text-center text-sm text-secondary-text-light dark:text-secondary-text-dark">
+                                No branches found.
                             </div>
                         ) : (
                             filteredBranches.map((branch) => (
                                 <button
-                                    key={branch.branchName}
-                                    onClick={() => handleSelectBranch(branch.branchName)}
-                                    className={`flex items-center justify-between w-full px-3 py-2 text-sm text-left hover:bg-component-secondary-bg-light dark:hover:bg-component-secondary-bg-dark transition-colors ${branch.branchName === currentBranch
-                                            ? "bg-primary/10"
-                                            : ""
-                                        }`}
+                                    key={branch}
+                                    onClick={() => handleSelectBranch(branch)}
+                                    className="w-full flex items-center justify-between px-4 py-2 text-sm text-left hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors group"
                                 >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <GitBranch className="w-4 h-4 flex-shrink-0 text-secondary-text-light dark:text-secondary-text-dark" />
-                                        <span className="truncate text-text-light dark:text-text-dark">
-                                            {branch.branchName}
-                                        </span>
-                                        {branch.isDefault && (
-                                            <span className="flex-shrink-0 text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                                                default
-                                            </span>
-                                        )}
-                                    </div>
-                                    {branch.branchName === currentBranch && (
-                                        <Check className="w-4 h-4 flex-shrink-0 text-primary" />
+                                    <span className={`font-medium ${branch === currentBranch ? "text-primary" : "text-text-light dark:text-text-dark"}`}>
+                                        {branch}
+                                    </span>
+                                    {branch === currentBranch && (
+                                        <Check className="w-4 h-4 text-primary" />
                                     )}
                                 </button>
                             ))
                         )}
                     </div>
 
-                    {/* Footer */}
-                    <div className="border-t border-border-light dark:border-border-dark">
-                        <button
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left text-secondary-text-light dark:text-secondary-text-dark hover:bg-component-secondary-bg-light dark:hover:bg-component-secondary-bg-dark transition-colors"
-                            onClick={() => {
-                                // TODO: Open create branch modal
-                                setIsOpen(false);
-                            }}
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span>Create new branch</span>
-                        </button>
+                    {/* Footer Actions (Optional) */}
+                    <div className="p-2 border-t border-border-light dark:border-border-dark bg-component-secondary-bg-light/30 dark:bg-component-secondary-bg-dark/30 text-center">
+                        <a href="#" className="text-xs font-medium text-secondary-text-light dark:text-secondary-text-dark hover:text-primary transition-colors">View all branches</a>
                     </div>
                 </div>
             )}
