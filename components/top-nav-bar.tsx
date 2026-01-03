@@ -5,13 +5,18 @@ import Link from "next/link";
 import { Search, Bell, Plus, User, LogOut, Book, Star, GitPullRequest } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/components/auth-provider";
+import { NewRepositoryModal } from "@/components/new-repository-modal";
 
 export function TopNavBar() {
     const { user, isAuthenticated, logout } = useAuth();
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+    const [isNewRepoModalOpen, setIsNewRepoModalOpen] = useState(false);
+
     const notifRef = useRef<HTMLDivElement>(null);
     const userRef = useRef<HTMLDivElement>(null);
+    const plusMenuRef = useRef<HTMLDivElement>(null);
 
     // Close dropdowns when clicking outside
     useEffect(() => {
@@ -21,6 +26,9 @@ export function TopNavBar() {
             }
             if (userRef.current && !userRef.current.contains(event.target as Node)) {
                 setIsUserMenuOpen(false);
+            }
+            if (plusMenuRef.current && !plusMenuRef.current.contains(event.target as Node)) {
+                setIsPlusMenuOpen(false);
             }
         }
         document.addEventListener("mousedown", handleClickOutside);
@@ -88,6 +96,7 @@ export function TopNavBar() {
                         Explore
                     </Link>
                 </div>
+
                 <div className="flex gap-2 items-center">
                     <ThemeToggle />
 
@@ -101,7 +110,7 @@ export function TopNavBar() {
                         </button>
 
                         {isNotificationsOpen && (
-                            <div className="absolute right-0 left-auto mr-2 mt-2 w-80 max-w-[90vw] bg-component-bg-light dark:bg-component-bg-dark border border-border-light dark:border-border-dark rounded-lg shadow-lg py-2 z-50 whitespace-normal origin-top-right">
+                            <div className="absolute right-0 left-auto mr-2 mt-2 w-80 max-w-[90vw] bg-component-bg-light dark:bg-component-bg-dark border border-border-light dark:border-border-dark rounded-lg shadow-lg py-2 z-50 whitespace-normal origin-top-right animate-in fade-in zoom-in-95 duration-100">
                                 <div className="px-4 py-2 border-b border-border-light dark:border-border-dark">
                                     <h3 className="font-semibold text-text-light dark:text-text-dark">Notifications</h3>
                                 </div>
@@ -147,12 +156,45 @@ export function TopNavBar() {
                         )}
                     </div>
 
-                    <button className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark text-text-light dark:text-text-dark gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                        <Plus className="w-5 h-5" />
-                    </button>
+                    {/* New Creation Menu */}
+                    <div className="relative" ref={plusMenuRef}>
+                        <button
+                            onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
+                            className={`flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark text-text-light dark:text-text-dark gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ${isPlusMenuOpen ? 'ring-2 ring-primary/20' : ''}`}
+                        >
+                            <Plus className={`w-5 h-5 transition-transform duration-200 ${isPlusMenuOpen ? 'rotate-45' : ''}`} />
+                            <span className="hidden sm:inline text-xs">New</span>
+                        </button>
+
+                        {isPlusMenuOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-48 origin-top-right rounded-xl border border-border-light dark:border-border-dark bg-component-bg-light dark:bg-component-bg-dark shadow-lg ring-1 ring-black ring-opacity-5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                <div className="p-1">
+                                    <button
+                                        onClick={() => {
+                                            setIsNewRepoModalOpen(true);
+                                            setIsPlusMenuOpen(false);
+                                        }}
+                                        className="flex items-center gap-3 w-full px-3 py-2 text-sm text-text-light dark:text-text-dark hover:bg-component-secondary-bg-light dark:hover:bg-component-secondary-bg-dark rounded-lg transition-colors group cursor-pointer"
+                                    >
+                                        <div className="p-1.5 rounded-md border border-border-light dark:border-border-dark bg-white dark:bg-black/20 group-hover:border-primary/50 transition-colors">
+                                            <Book className="w-4 h-4 text-secondary-text-light dark:text-secondary-text-dark group-hover:text-primary transition-colors" />
+                                        </div>
+                                        <span className="font-medium">Repository</span>
+                                    </button>
+
+                                    {/* Placeholders for future items */}
+                                    <button className="flex items-center gap-3 w-full px-3 py-2 text-sm text-text-light dark:text-text-dark hover:bg-component-secondary-bg-light dark:hover:bg-component-secondary-bg-dark rounded-lg transition-colors group opacity-50 cursor-not-allowed">
+                                        <div className="p-1.5 rounded-md border border-border-light dark:border-border-dark bg-white dark:bg-black/20">
+                                            <GitPullRequest className="w-4 h-4 text-secondary-text-light dark:text-secondary-text-dark" />
+                                        </div>
+                                        <span>New Issue</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* User Menu */}
                 {/* User Menu */}
                 {isAuthenticated && user ? (
                     <div className="relative" ref={userRef}>
@@ -166,7 +208,7 @@ export function TopNavBar() {
                         ></button>
 
                         {isUserMenuOpen && (
-                            <div className="absolute right-0 top-full mt-3 w-60 origin-top-right rounded-xl border border-border-light dark:border-border-dark bg-component-bg-light dark:bg-component-bg-dark shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                            <div className="absolute right-0 top-full mt-3 w-60 origin-top-right rounded-xl border border-border-light dark:border-border-dark bg-component-bg-light dark:bg-component-bg-dark shadow-lg ring-1 ring-black ring-opacity-5 z-50 animate-in fade-in zoom-in-95 duration-100">
                                 <div className="absolute -top-2 right-4 h-4 w-4 rotate-45 border-l border-t border-border-light dark:border-border-dark bg-component-bg-light dark:bg-component-bg-dark"></div>
                                 <div className="py-2">
                                     {/* User Info Item */}
@@ -242,7 +284,7 @@ export function TopNavBar() {
                                             logout();
                                             setIsUserMenuOpen(false);
                                         }}
-                                        className="flex items-center gap-4 px-4 min-h-12 justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors w-full text-left"
+                                        className="flex items-center gap-4 px-4 min-h-12 justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors w-full text-left cursor-pointer"
                                     >
                                         <div className="flex items-center gap-4">
                                             <div className="text-secondary-text-light dark:text-secondary-text-dark flex size-9 shrink-0 items-center justify-center rounded-lg">
@@ -266,6 +308,11 @@ export function TopNavBar() {
                     </Link>
                 )}
             </div>
-        </header>
+
+            <NewRepositoryModal
+                isOpen={isNewRepoModalOpen}
+                onClose={() => setIsNewRepoModalOpen(false)}
+            />
+        </header >
     );
 }

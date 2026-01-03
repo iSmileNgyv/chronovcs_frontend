@@ -5,13 +5,20 @@ import {
     CreateRepositoryResponseDto,
     RepositorySettingsResponseDto,
     UpdateRepositorySettingsRequestDto,
+    UpdateRepositoryInfoRequestDto,
+    EffectivePermissionResponseDto,
+    RepoPermissionResponseDto,
+    RepoPermissionUpdateRequestDto,
     RefsResponseDto,
     CommitSnapshotDto,
     CommitHistoryResponseDto,
     HandshakeResponse,
     BatchObjectsResponseDto,
     TreeResponseDto,
+    CliTokenResponseDto,
+    HandshakePermissionDto,
 } from '@/types/repository-dto';
+import { CreateTokenRequest } from '@/types/auth-dto';
 
 class RepositoryService extends BaseService {
     /**
@@ -137,8 +144,51 @@ class RepositoryService extends BaseService {
      * GET /api/repositories/{repoKey}/blobs/{hash}
      */
     async getBlob(repoKey: string, hash: string): Promise<string> {
-        // We might want to handle binary data differently, but for now assuming text
         return this.get<string>(`/repositories/${repoKey}/blobs/${hash}`);
+    }
+
+    /**
+     * Create CLI Token for repository
+     * POST /api/repositories/{repoKey}/tokens/cli
+     */
+    async createCliToken(repoKey: string, data: CreateTokenRequest): Promise<CliTokenResponseDto> {
+        return this.post<CliTokenResponseDto>(`/repositories/${repoKey}/tokens/cli`, data);
+    }
+
+    /**
+     * Get Token Permissions
+     * GET /api/repositories/{repoKey}/tokens/permissions
+     */
+    async updateRepositoryInfo(repoKey: string, data: UpdateRepositoryInfoRequestDto): Promise<RepositoryInfoDto> {
+        return this.put<RepositoryInfoDto>(`/repositories/${repoKey}`, data);
+    }
+
+    async getEffectivePermissions(repoKey: string): Promise<EffectivePermissionResponseDto> {
+        return this.get<EffectivePermissionResponseDto>(`/repositories/${repoKey}/permissions/effective`);
+    }
+
+    async listPermissions(repoKey: string): Promise<RepoPermissionResponseDto[]> {
+        return this.get<RepoPermissionResponseDto[]>(`/repositories/${repoKey}/permissions`);
+    }
+
+    async upsertPermission(repoKey: string, data: RepoPermissionUpdateRequestDto): Promise<RepoPermissionResponseDto> {
+        return this.put<RepoPermissionResponseDto>(`/repositories/${repoKey}/permissions`, data);
+    }
+
+    async deletePermission(repoKey: string, userEmail?: string, userUid?: string): Promise<void> {
+        const params = new URLSearchParams();
+        if (userEmail) params.append('userEmail', userEmail);
+        if (userUid) params.append('userUid', userUid);
+        return this.delete(`/repositories/${repoKey}/permissions?${params.toString()}`);
+    }
+
+    /**
+     * Delete repository
+     * DELETE /api/repositories/{repoKey}
+     * Note: This is a placeholder as the backend endpoint does not exist yet.
+     */
+    async deleteRepository(repoKey: string): Promise<void> {
+        return this.delete(`/repositories/${repoKey}`);
     }
 }
 

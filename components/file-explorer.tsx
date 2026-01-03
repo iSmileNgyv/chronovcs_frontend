@@ -185,49 +185,7 @@ chrono push -u origin ${branch}`}
 
     return (
         <div className="flex flex-col gap-4">
-            {/* Branch and Breadcrumbs Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 py-2">
-                <div className="flex items-center gap-4">
-                    {/* Branch Selector */}
-                    <div className="relative">
-                        <button className="flex items-center gap-2 rounded-lg h-9 bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark text-text-light dark:text-text-dark text-sm font-medium px-4 border border-border-light dark:border-border-dark hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm">
-                            <GitBranch className="w-4 h-4 text-secondary-text-light dark:text-secondary-text-dark" />
-                            <span>{branch}</span>
-                        </button>
-                    </div>
-
-                    {/* Breadcrumbs */}
-                    <nav className="flex items-center text-sm overflow-hidden whitespace-nowrap mask-linear-fade">
-                        <Link
-                            href={`/${username}/${repoName}`}
-                            className="font-semibold text-primary hover:underline flex items-center"
-                        >
-                            {repoName}
-                        </Link>
-                        {pathParts.map((part, index) => (
-                            <div key={index} className="flex items-center text-secondary-text-light dark:text-secondary-text-dark">
-                                <ChevronRight className="w-4 h-4 mx-1 opacity-50" />
-                                {index === pathParts.length - 1 ? (
-                                    <span className="font-semibold text-text-light dark:text-text-dark">{part}</span>
-                                ) : (
-                                    <Link
-                                        href={`/${username}/${repoName}/tree/${branch}/${pathParts.slice(0, index + 1).join("/")}`}
-                                        className="hover:text-primary hover:underline transition-colors"
-                                    >
-                                        {part}
-                                    </Link>
-                                )}
-                            </div>
-                        ))}
-                    </nav>
-                </div>
-
-                {/* Clone Code Button (Placeholder) */}
-                <button className="hidden sm:flex items-center gap-2 bg-primary text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
-                    <FileCode className="w-4 h-4" />
-                    <span>Clone</span>
-                </button>
-            </div>
+            {/* Branch and Breadcrumbs Bar removed as per user request */}
 
             <div className="border rounded-lg border-border-light dark:border-border-dark bg-component-bg-light dark:bg-component-bg-dark overflow-hidden shadow-sm">
                 {/* Latest Commit Header */}

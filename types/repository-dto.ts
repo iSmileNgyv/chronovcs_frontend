@@ -51,6 +51,33 @@ export interface UpdateRepositorySettingsRequestDto {
     releaseEnabled?: boolean;
 }
 
+export interface UpdateRepositoryInfoRequestDto {
+    name?: string;
+    description?: string;
+    privateRepo?: boolean;
+    defaultBranch?: string;
+    releaseEnabled?: boolean;
+}
+
+export interface RepoPermissionResponseDto extends HandshakePermissionDto {
+    repoKey: string; // was id in old DTO, but backend doesn't send id. Backend sends repoKey
+    userEmail: string;
+    userUid: string;
+    owner: boolean; // Backend sends this
+    // flattened permissions come from HandshakePermissionDto
+}
+
+export interface RepoPermissionUpdateRequestDto extends Partial<HandshakePermissionDto> {
+    userEmail?: string;
+    userUid?: string;
+}
+
+export interface EffectivePermissionResponseDto {
+    source: string;
+    tokenId?: string;
+    permissions: HandshakePermissionDto;
+}
+
 // =====================================
 // Refs & Clone DTOs
 // =====================================
@@ -107,11 +134,7 @@ export interface HandshakeRepositoryDto {
     versioningMode: string;
 }
 
-export interface HandshakePermissionDto {
-    canRead: boolean;
-    canWrite: boolean;
-    canManage: boolean;
-}
+
 
 export interface TreeEntryDto {
     name: string;
@@ -129,4 +152,23 @@ export interface TreeResponseDto {
     commitId: string;
     path: string;
     entries: TreeEntryDto[];
+}
+
+export interface HandshakePermissionDto {
+    canRead: boolean;
+    canPull: boolean;
+    canPush: boolean;
+    canCreateBranch: boolean;
+    canDeleteBranch: boolean;
+    canMerge: boolean;
+    canCreateTag: boolean;
+    canDeleteTag: boolean;
+    canManageRepo: boolean;
+    canBypassTaskPolicy: boolean;
+}
+
+export interface CliTokenResponseDto {
+    repoKey: string;
+    token: import('./auth-dto').TokenResponse;
+    permissions: HandshakePermissionDto;
 }

@@ -7,6 +7,7 @@ import {
     CreateTokenRequest,
     TokenResponse,
 } from '@/types/auth-dto';
+import { TokenSummaryDto, TokenPermissionDto, TokenPermissionRequestDto } from '@/types/token-dto';
 
 class AuthService extends BaseService {
     /**
@@ -80,6 +81,50 @@ class AuthService extends BaseService {
      */
     async createToken(data: CreateTokenRequest): Promise<TokenResponse> {
         return this.post<TokenResponse>('/auth/tokens', data);
+    }
+
+    /**
+     * List all PAT tokens
+     * GET /api/auth/tokens
+     */
+    async listTokens(): Promise<TokenSummaryDto[]> {
+        return this.get<TokenSummaryDto[]>('/auth/tokens');
+    }
+
+    /**
+     * Revoke a PAT token
+     * DELETE /api/auth/tokens/{tokenId}
+     */
+    async revokeToken(tokenId: string): Promise<void> {
+        return this.delete(`/auth/tokens/${tokenId}`);
+    }
+
+    /**
+     * List permissions for a token
+     * GET /api/auth/tokens/{tokenId}/permissions
+     */
+    async listTokenPermissions(tokenId: string): Promise<TokenPermissionDto[]> {
+        return this.get<TokenPermissionDto[]>(`/auth/tokens/${tokenId}/permissions`);
+    }
+
+    /**
+     * Upsert permissions for a token on a repo
+     * PUT /api/auth/tokens/{tokenId}/permissions/{repoKey}
+     */
+    async upsertTokenPermission(
+        tokenId: string,
+        repoKey: string,
+        permissions: TokenPermissionRequestDto
+    ): Promise<TokenPermissionDto> {
+        return this.put<TokenPermissionDto>(`/auth/tokens/${tokenId}/permissions/${repoKey}`, permissions);
+    }
+
+    /**
+     * Delete permissions for a token on a repo
+     * DELETE /api/auth/tokens/{tokenId}/permissions/{repoKey}
+     */
+    async deleteTokenPermission(tokenId: string, repoKey: string): Promise<void> {
+        return this.delete(`/auth/tokens/${tokenId}/permissions/${repoKey}`);
     }
 
     /**
