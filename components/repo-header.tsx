@@ -38,9 +38,8 @@ export function RepoHeader({ username, repoName, showSourceControls = true }: Re
     const pathname = usePathname();
 
     const isSettingsActive = pathname?.includes("/settings");
-    // Simple check: if not settings (and strictly speaking other tabs), assume code. 
-    // In future, we'd check !isIssues && !isPullRequests etc.
-    const isCodeActive = !isSettingsActive;
+    const isPullRequestsActive = pathname?.includes("/pulls");
+    const isCodeActive = !isSettingsActive && !isPullRequestsActive;
 
     const activeTabClass = "border-b-primary text-text-light dark:text-text-dark";
     const inactiveTabClass = "border-b-transparent text-secondary-text-light dark:text-secondary-text-dark hover:text-text-light dark:hover:text-text-dark";
@@ -107,10 +106,10 @@ export function RepoHeader({ username, repoName, showSourceControls = true }: Re
                         <p className="text-sm font-bold leading-normal">Issues</p>
                     </Link>
                     <Link
-                        className={`flex items-center justify-center border-b-[3px] gap-2 pb-2.5 pt-1 whitespace-nowrap transition-colors ${inactiveTabClass}`}
-                        href="#"
+                        className={`flex items-center justify-center border-b-[3px] gap-2 pb-2.5 pt-1 whitespace-nowrap transition-colors ${isPullRequestsActive ? activeTabClass : inactiveTabClass}`}
+                        href={`/${username}/${repoName}/pulls`}
                     >
-                        <GitPullRequest className="w-6 h-6" />
+                        <GitPullRequest className={`w-6 h-6 ${isPullRequestsActive ? "text-primary" : ""}`} />
                         <p className="text-sm font-bold leading-normal">Pull Requests</p>
                     </Link>
                     <Link

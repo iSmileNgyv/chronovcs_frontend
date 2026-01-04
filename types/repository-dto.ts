@@ -172,3 +172,91 @@ export interface CliTokenResponseDto {
     token: import('./auth-dto').TokenResponse;
     permissions: HandshakePermissionDto;
 }
+
+// =====================================
+// Pull Request DTOs
+// =====================================
+
+export type PullRequestStatus = 'OPEN' | 'CLOSED' | 'MERGED';
+
+export interface PullRequestUserDto {
+    userUid: string;
+    email: string;
+    displayName: string;
+}
+
+export interface PullRequestResponseDto {
+    id: number;
+    repoKey: string;
+    title: string;
+    description: string;
+    sourceBranch: string;
+    targetBranch: string;
+    status: PullRequestStatus;
+    sourceHeadCommitId: string;
+    targetHeadCommitId: string;
+    mergeCommitId: string | null;
+    createdBy: PullRequestUserDto;
+    mergedBy: PullRequestUserDto | null;
+    createdAt: string;
+    updatedAt: string;
+    mergedAt: string | null;
+}
+
+export interface CreatePullRequestRequestDto {
+    title: string;
+    description?: string;
+    sourceBranch: string;
+    targetBranch: string;
+}
+
+export interface UpdatePullRequestRequestDto {
+    title?: string;
+    description?: string;
+    targetBranch?: string;
+}
+
+export interface MergePullRequestRequestDto {
+    message?: string;
+    strategy?: string;
+}
+
+export interface MergeAnalysisResponse {
+    canMerge: boolean;
+    conflicts: boolean;
+    diverged: boolean;
+    messages: string[];
+}
+
+// =====================================
+// Diff DTOs
+// =====================================
+
+export interface DiffStats {
+    filesChanged: number;
+    additions: number;
+    deletions: number;
+}
+
+export interface FileDiff {
+    oldPath: string | null;
+    newPath: string | null;
+    changeType: 'ADDED' | 'MODIFIED' | 'DELETED' | 'RENAMED' | 'COPIED';
+    oldBlobHash: string | null;
+    newBlobHash: string | null;
+    linesAdded: number;
+    linesDeleted: number;
+    totalChanges: number;
+    patch: string | null;
+    binary: boolean;
+}
+
+export interface DiffResponse {
+    baseCommitId: string;
+    headCommitId: string;
+    baseCommitMessage: string;
+    headCommitMessage: string;
+    files: FileDiff[];
+    stats: DiffStats;
+    identical: boolean;
+}

@@ -44,71 +44,64 @@ export default function SettingsPage({
     }, [repo]);
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark font-display">
-            <TopNavBar />
-            <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <RepoHeader username={username} repoName={repo} showSourceControls={false} />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Sidebar Tabs */}
+            <div className="lg:col-span-1">
+                <nav className="flex flex-col space-y-1">
+                    <button
+                        onClick={() => setActiveTab("general")}
+                        className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === "general"
+                            ? "bg-primary/10 text-primary"
+                            : "text-text-light dark:text-text-dark hover:bg-component-secondary-bg-light dark:hover:bg-component-secondary-bg-dark"
+                            }`}
+                    >
+                        General
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("permissions")}
+                        className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === "permissions"
+                            ? "bg-primary/10 text-primary"
+                            : "text-text-light dark:text-text-dark hover:bg-component-secondary-bg-light dark:hover:bg-component-secondary-bg-dark"
+                            }`}
+                    >
+                        Permissions
+                    </button>
+                </nav>
+            </div>
 
-                <div className="mt-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    {/* Sidebar Tabs */}
-                    <div className="lg:col-span-1">
-                        <nav className="flex flex-col space-y-1">
-                            <button
-                                onClick={() => setActiveTab("general")}
-                                className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === "general"
-                                    ? "bg-primary/10 text-primary"
-                                    : "text-text-light dark:text-text-dark hover:bg-component-secondary-bg-light dark:hover:bg-component-secondary-bg-dark"
-                                    }`}
-                            >
-                                General
-                            </button>
-                            <button
-                                onClick={() => setActiveTab("permissions")}
-                                className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === "permissions"
-                                    ? "bg-primary/10 text-primary"
-                                    : "text-text-light dark:text-text-dark hover:bg-component-secondary-bg-light dark:hover:bg-component-secondary-bg-dark"
-                                    }`}
-                            >
-                                Permissions
-                            </button>
-                        </nav>
+            {/* Content Area */}
+            <div className="lg:col-span-3 space-y-8">
+                {isLoading ? (
+                    <div className="flex justify-center py-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     </div>
-
-                    {/* Content Area */}
-                    <div className="lg:col-span-3 space-y-8">
-                        {isLoading ? (
-                            <div className="flex justify-center py-12">
-                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                            </div>
-                        ) : error ? (
-                            <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl">
-                                {error}
-                            </div>
-                        ) : settings && repoInfo ? (
+                ) : error ? (
+                    <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl">
+                        {error}
+                    </div>
+                ) : settings && repoInfo ? (
+                    <>
+                        {activeTab === "general" && (
                             <>
-                                {activeTab === "general" && (
-                                    <>
-                                        <GeneralSettings
-                                            repoKey={repo}
-                                            initialSettings={settings}
-                                            repoInfo={repoInfo}
-                                            onUpdate={fetchSettings}
-                                        />
+                                <GeneralSettings
+                                    repoKey={repo}
+                                    initialSettings={settings}
+                                    repoInfo={repoInfo}
+                                    onUpdate={fetchSettings}
+                                />
 
-                                        <DangerZone
-                                            repoKey={repo}
-                                            username={username}
-                                        />
-                                    </>
-                                )}
-                                {activeTab === "permissions" && (
-                                    <PermissionsSettings repoKey={repo} ownerUid={repoInfo.ownerUid} />
-                                )}
+                                <DangerZone
+                                    repoKey={repo}
+                                    username={username}
+                                />
                             </>
-                        ) : null}
-                    </div>
-                </div>
-            </main>
+                        )}
+                        {activeTab === "permissions" && (
+                            <PermissionsSettings repoKey={repo} ownerUid={repoInfo.ownerUid} />
+                        )}
+                    </>
+                ) : null}
+            </div>
         </div>
     );
 }

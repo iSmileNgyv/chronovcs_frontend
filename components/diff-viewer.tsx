@@ -1,205 +1,93 @@
 "use client";
 
-import React from "react";
-import { Plus, Minus, FileText } from "lucide-react";
+import React, { useState } from "react";
+import { FileDiff } from "@/types/repository-dto";
+import { ChevronDown, ChevronRight, File, FileCode } from "lucide-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useTheme } from "next-themes";
-import { FileDiff, DiffStats } from "@/types/diff-dto";
 
 interface DiffViewerProps {
-    files: FileDiff[];
-    stats: DiffStats;
+    diffs: FileDiff[];
 }
 
-const getLanguageFromPath = (path: string): string => {
-    const ext = path.split(".").pop()?.toLowerCase() || "";
-    const languageMap: Record<string, string> = {
-        js: "javascript",
-        jsx: "jsx",
-        ts: "typescript",
-        tsx: "tsx",
-        py: "python",
-        rb: "ruby",
-        java: "java",
-        go: "go",
-        rs: "rust",
-        c: "c",
-        cpp: "cpp",
-        h: "c",
-        hpp: "cpp",
-        cs: "csharp",
-        php: "php",
-        swift: "swift",
-        kt: "kotlin",
-        scala: "scala",
-        sh: "bash",
-        bash: "bash",
-        zsh: "bash",
-        json: "json",
-        yaml: "yaml",
-        yml: "yaml",
-        xml: "xml",
-        html: "html",
-        css: "css",
-        scss: "scss",
-        less: "less",
-        md: "markdown",
-        sql: "sql",
-        graphql: "graphql",
-    };
-    return languageMap[ext] || "text";
-};
-
-const getStatusColor = (status: FileDiff["status"]) => {
-    switch (status) {
-        case "added":
-            return "text-green-500";
-        case "deleted":
-            return "text-red-500";
-        case "modified":
-            return "text-yellow-500";
-        case "renamed":
-            return "text-blue-500";
-        default:
-            return "text-secondary-text-light dark:text-secondary-text-dark";
+export function DiffViewer({ diffs }: DiffViewerProps) {
+    if (!diffs || diffs.length === 0) {
+        return <div className="text-center p-8 text-secondary-text-light dark:text-secondary-text-dark">No changes found.</div>;
     }
-};
-
-const getStatusLabel = (status: FileDiff["status"]) => {
-    switch (status) {
-        case "added":
-            return "Added";
-        case "deleted":
-            return "Deleted";
-        case "modified":
-            return "Modified";
-        case "renamed":
-            return "Renamed";
-        default:
-            return status;
-    }
-};
-
-export function DiffViewer({ files, stats }: DiffViewerProps) {
-    const { resolvedTheme } = useTheme();
-    const isDark = resolvedTheme === "dark";
 
     return (
-        <div className="space-y-4">
-            {/* Stats Summary */}
-            <div className="flex items-center gap-4 text-sm text-secondary-text-light dark:text-secondary-text-dark">
-                <span>{stats.filesChanged} file{stats.filesChanged !== 1 ? "s" : ""} changed</span>
-                <span className="flex items-center gap-1 text-green-500">
-                    <Plus className="w-4 h-4" />
-                    {stats.additions}
-                </span>
-                <span className="flex items-center gap-1 text-red-500">
-                    <Minus className="w-4 h-4" />
-                    {stats.deletions}
-                </span>
-            </div>
-
-            {/* File List */}
-            {files.map((file, index) => (
-                <div
-                    key={file.path}
-                    className="border border-border-light dark:border-border-dark rounded-lg overflow-hidden"
-                >
-                    {/* File Header */}
-                    <div className="flex items-center justify-between px-4 py-2 bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark border-b border-border-light dark:border-border-dark">
-                        <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-secondary-text-light dark:text-secondary-text-dark" />
-                            <span className="font-mono text-sm text-text-light dark:text-text-dark">
-                                {file.oldPath && file.oldPath !== file.path ? (
-                                    <>
-                                        <span className="text-red-500 line-through">{file.oldPath}</span>
-                                        <span className="mx-2">→</span>
-                                        <span>{file.path}</span>
-                                    </>
-                                ) : (
-                                    file.path
-                                )}
-                            </span>
-                            <span
-                                className={`px-2 py-0.5 text-xs font-medium rounded ${getStatusColor(file.status)}`}
-                            >
-                                {getStatusLabel(file.status)}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-sm">
-                            <span className="text-green-500">+{file.additions}</span>
-                            <span className="text-red-500">-{file.deletions}</span>
-                        </div>
-                    </div>
-
-                    {/* Diff Content */}
-                    {file.binary ? (
-                        <div className="px-4 py-8 text-center text-secondary-text-light dark:text-secondary-text-dark">
-                            Binary file not shown
-                        </div>
-                    ) : file.patch ? (
-                        <div className="overflow-x-auto">
-                            <DiffPatch patch={file.patch} language={getLanguageFromPath(file.path)} isDark={isDark} />
-                        </div>
-                    ) : (
-                        <div className="px-4 py-8 text-center text-secondary-text-light dark:text-secondary-text-dark">
-                            No changes to display
-                        </div>
-                    )}
-                </div>
+        <div className="flex flex-col gap-4">
+            {diffs.map((file, index) => (
+                <FileDiffCard key={index} file={file} />
             ))}
         </div>
     );
 }
 
-interface DiffPatchProps {
-    patch: string;
-    language: string;
-    isDark: boolean;
-}
+function FileDiffCard({ file }: { file: FileDiff }) {
+    const [collapsed, setCollapsed] = useState(false);
+    const { resolvedTheme } = useTheme();
 
-function DiffPatch({ patch, language, isDark }: DiffPatchProps) {
-    const lines = patch.split("\n");
+    // Determine filename to display
+    // If RENAMED, show old -> new?
+    const displayName = file.changeType === 'RENAMED'
+        ? `${file.oldPath} → ${file.newPath}`
+        : (file.newPath || file.oldPath || "Unknown file");
+
+    const isBinary = file.binary;
 
     return (
-        <table className="w-full text-sm font-mono">
-            <tbody>
-                {lines.map((line, index) => {
-                    let bgColor = "";
-                    let textColor = "text-text-light dark:text-text-dark";
-                    let linePrefix = " ";
+        <div className="border rounded-lg border-border-light dark:border-border-dark bg-component-bg-light dark:bg-component-bg-dark overflow-hidden">
+            {/* Header */}
+            <div
+                className="bg-component-secondary-bg-light dark:bg-component-secondary-bg-dark px-4 py-2 border-b border-border-light dark:border-border-dark flex items-center justify-between cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                onClick={() => setCollapsed(!collapsed)}
+            >
+                <div className="flex items-center gap-2">
+                    <button className="text-secondary-text-light dark:text-secondary-text-dark">
+                        {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                    <span className="font-mono text-sm font-medium text-text-light dark:text-text-dark">{displayName}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded border border-border-light dark:border-border-dark text-secondary-text-light dark:text-secondary-text-dark">
+                        {file.changeType}
+                    </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-mono">
+                    <span className="text-green-500">+{file.linesAdded}</span>
+                    <span className="text-red-500">-{file.linesDeleted}</span>
+                </div>
+            </div>
 
-                    if (line.startsWith("+") && !line.startsWith("+++")) {
-                        bgColor = "bg-green-500/10";
-                        textColor = "text-green-600 dark:text-green-400";
-                        linePrefix = "+";
-                    } else if (line.startsWith("-") && !line.startsWith("---")) {
-                        bgColor = "bg-red-500/10";
-                        textColor = "text-red-600 dark:text-red-400";
-                        linePrefix = "-";
-                    } else if (line.startsWith("@@")) {
-                        bgColor = "bg-blue-500/10";
-                        textColor = "text-blue-600 dark:text-blue-400";
-                    }
-
-                    return (
-                        <tr key={index} className={bgColor}>
-                            <td className="px-2 py-0.5 text-right text-secondary-text-light dark:text-secondary-text-dark select-none w-10 border-r border-border-light dark:border-border-dark">
-                                {index + 1}
-                            </td>
-                            <td className={`px-2 py-0.5 w-4 ${textColor} select-none`}>
-                                {linePrefix}
-                            </td>
-                            <td className={`px-2 py-0.5 ${textColor} whitespace-pre`}>
-                                {line.startsWith("+") || line.startsWith("-")
-                                    ? line.substring(1)
-                                    : line}
-                            </td>
-                        </tr>
-                    );
-                })}
-            </tbody>
-        </table>
+            {/* Content */}
+            {!collapsed && (
+                <div className="text-xs overflow-x-auto">
+                    {isBinary ? (
+                        <div className="p-8 text-center text-secondary-text-light dark:text-secondary-text-dark italic">
+                            Binary file not shown.
+                        </div>
+                    ) : file.patch ? (
+                        <SyntaxHighlighter
+                            language="diff"
+                            style={resolvedTheme === "dark" ? oneDark : oneLight}
+                            showLineNumbers={true} // Line numbers for diff are tricky as they differ for +/-. SyntaxHighlighter just counts lines of patch.
+                            // Better than nothing.
+                            customStyle={{
+                                margin: 0,
+                                padding: "1rem",
+                                background: "transparent",
+                                fontSize: "0.80rem", // slightly smaller for diffs
+                            }}
+                        >
+                            {file.patch}
+                        </SyntaxHighlighter>
+                    ) : (
+                        <div className="p-8 text-center text-secondary-text-light dark:text-secondary-text-dark italic">
+                            No content changes (maybe empty file or type change only).
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
     );
 }
